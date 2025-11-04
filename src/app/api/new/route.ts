@@ -2,30 +2,36 @@
  * KV-backed payload storage endpoint
  * POST /api/new with JSON body
  * Returns a short link /p/<hash>
- *
- * Usage:
- * curl -X POST https://your-domain.com/api/new \
- *   -H "Content-Type: application/json" \
- *   -d '[{"product":"Test","variantId":"123",...}]'
  */
 
-interface Env {
+import { NextRequest } from 'next/server';
+
+export const runtime = 'edge';
+
+interface CloudflareEnv {
   CONTENT: KVNamespace;
 }
 
-export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+export async function POST(request: NextRequest) {
   try {
+    // Get KV binding from Cloudflare env
+    const env = process.env as unknown as CloudflareEnv;
+
+    if (!env.CONTENT) {
+      return Response.json(
+        { error: 'KV namespace not configured' },
+        { status: 500 }
+      );
+    }
+
     // Parse the JSON body
     const body = await request.json();
 
     // Validate that we have an array
     if (!Array.isArray(body)) {
-      return new Response(
-        JSON.stringify({ error: 'Expected an array of products' }),
-        {
-          status: 400,
-          headers: { 'content-type': 'application/json' }
-        }
+      return Response.json(
+        { error: 'Expected an array of products' },
+        { status: 400 }
       );
     }
 
@@ -48,38 +54,34 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     // Return the short link
     const url = `/p/${id}`;
 
-    return new Response(
-      JSON.stringify({
+    return Response.json(
+      {
         url,
         id,
         size: text.length,
         items: body.length
-      }),
+      },
       {
         status: 200,
         headers: {
-          'content-type': 'application/json',
           'access-control-allow-origin': '*',
         }
       }
     );
   } catch (err) {
     const error = err as Error;
-    return new Response(
-      JSON.stringify({
+    return Response.json(
+      {
         error: 'Failed to process request',
         message: error.message
-      }),
-      {
-        status: 500,
-        headers: { 'content-type': 'application/json' }
-      }
+      },
+      { status: 500 }
     );
   }
-};
+}
 
 // Handle CORS preflight
-export const onRequestOptions: PagesFunction = async () => {
+export async function OPTIONS() {
   return new Response(null, {
     headers: {
       'access-control-allow-origin': '*',
@@ -87,4 +89,4 @@ export const onRequestOptions: PagesFunction = async () => {
       'access-control-allow-headers': 'Content-Type',
     },
   });
-};
+}

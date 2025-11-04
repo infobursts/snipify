@@ -29,35 +29,62 @@ A single-page static app that **compresses JSON into the URL** and **decompresse
 
 ## 🚀 Quick Start
 
+### Prerequisites
+
+This project uses **Next.js 15** with **OpenNext for Cloudflare Workers**. Make sure you have:
+- Node.js 18+
+- npm 10+
+- A Cloudflare account
+
 ### Option 1: Static Mode (No KV Required)
 
-1. **Deploy to Cloudflare Pages:**
+The static payload renderer works without any backend setup:
+
+1. **Install dependencies:**
    ```bash
-   # Using Wrangler CLI
-   npx wrangler pages deploy public --project-name=snipify
+   npm install
    ```
 
-2. **Access the app:**
+2. **Build and deploy:**
+   ```bash
+   npm run build
+   npm run deploy
+   ```
+
+3. **Access the app:**
    - Visit `https://your-domain.pages.dev/payload-renderer.html`
    - Paste your JSON and click "Generate Link (?d=)"
    - Share the generated URL!
 
 ### Option 2: KV-Backed Mode (For Large Payloads)
 
+For payloads that exceed URL size limits, use KV storage:
+
 1. **Create a KV namespace:**
    ```bash
    npx wrangler kv:namespace create CONTENT
    ```
 
-2. **Deploy with Functions:**
-   ```bash
-   # Deploy the entire project including functions/
-   npx wrangler pages deploy . --project-name=snipify
+   This will output something like:
+   ```
+   { binding = "CONTENT", id = "abc123def456..." }
    ```
 
-3. **Bind KV in Cloudflare Dashboard:**
-   - Go to Pages → Settings → Functions → KV bindings
-   - Add binding: Variable name `CONTENT`, select your KV namespace
+2. **Update wrangler.jsonc with your KV namespace ID:**
+   ```json
+   "kv_namespaces": [
+     {
+       "binding": "CONTENT",
+       "id": "abc123def456..."  // Replace with your actual ID
+     }
+   ]
+   ```
+
+3. **Build and deploy:**
+   ```bash
+   npm run build
+   npm run deploy
+   ```
 
 4. **Use the API:**
    ```bash
@@ -163,46 +190,72 @@ GET  /p/abc123... → Renders products
 ```
 / (repo root)
 ├─ public/
-│  └─ payload-renderer.html   # Static encoder/decoder + renderer (Pattern A & B)
-└─ functions/                  # Only for Pattern C (KV-backed)
-   ├─ api/
-   │  └─ new.ts                # POST JSON → store → returns /p/<hash> URL
-   └─ p/
-      └─ [id].ts               # GET /p/<id> → fetch JSON from KV → render
+│  └─ payload-renderer.html      # Static encoder/decoder + renderer (Pattern A & B)
+├─ src/
+│  └─ app/
+│     ├─ api/
+│     │  └─ new/
+│     │     └─ route.ts          # POST JSON → store → returns /p/<hash> URL (Pattern C)
+│     └─ p/
+│        └─ [id]/
+│           └─ page.tsx          # GET /p/<id> → fetch JSON from KV → render (Pattern C)
+├─ wrangler.jsonc                # Cloudflare Workers configuration (KV bindings)
+└─ package.json                  # Dependencies and scripts
 ```
+
+**Key Architecture:**
+- **Next.js 15 App Router** for routing and server-side rendering
+- **OpenNext** for Cloudflare Workers deployment
+- **Edge Runtime** for fast, globally distributed API routes
+- **KV Namespace** for persistent storage (optional)
 
 ---
 
 ## ☁️ Cloudflare Pages Setup
 
-### Deploy Static Site
+### Deploy via Cloudflare Dashboard (Recommended)
 
-1. **Using Wrangler CLI:**
+1. **Connect your GitHub repository:**
+   - Go to **Cloudflare Dashboard** → **Pages** → **Create a project**
+   - Select your repository
+   - Configure build settings:
+     - **Framework preset:** Next.js
+     - **Build command:** `npm run build`
+     - **Build output directory:** (leave default or `.open-next`)
+
+2. **Configure environment variables** (if needed):
+   - Go to **Settings** → **Environment variables**
+   - Add any custom variables
+
+3. **Deploy:**
+   - Click **Save and Deploy**
+   - Wait for the build to complete
+
+### Deploy via CLI (Alternative)
+
+1. **Install dependencies:**
    ```bash
-   npx wrangler pages deploy public --project-name=snipify
+   npm install
    ```
 
-2. **Using Cloudflare Dashboard:**
-   - Go to Pages → Create a project
-   - Connect your GitHub repository
-   - Build settings:
-     - **Build command:** (none)
-     - **Build output directory:** `public`
-   - Deploy
-
-3. **Access your app:**
-   - `https://snipify.pages.dev/payload-renderer.html`
-
-### Deploy with Functions (KV Mode)
-
-1. **Ensure your project includes `functions/` directory**
-
-2. **Deploy entire project:**
+2. **Build the project:**
    ```bash
-   npx wrangler pages deploy . --project-name=snipify
+   npm run build
    ```
 
-3. **Configure KV binding** (see next section)
+   This runs `next build` and generates the `.open-next/` directory with the Worker bundle.
+
+3. **Deploy to Cloudflare:**
+   ```bash
+   npm run deploy
+   ```
+
+   This runs `opennextjs-cloudflare build && opennextjs-cloudflare deploy`.
+
+4. **Access your app:**
+   - Static renderer: `https://snipify.pages.dev/payload-renderer.html`
+   - API endpoint: `https://snipify.pages.dev/api/new`
+   - KV renderer: `https://snipify.pages.dev/p/<hash>`
 
 ---
 
@@ -214,12 +267,35 @@ GET  /p/abc123... → Renders products
 # Create production namespace
 npx wrangler kv:namespace create CONTENT
 
-# Note the ID shown in output
+# Note the ID shown in output, e.g.:
+# { binding = "CONTENT", id = "abc123def456..." }
 ```
 
-### Bind in Cloudflare Dashboard
+### Configure Binding (Choose One Method)
 
-1. Go to **Cloudflare Dashboard** → **Pages** → **Your Project**
+#### Method 1: Via wrangler.jsonc (Recommended for CLI Deployments)
+
+Update `wrangler.jsonc` with your KV namespace ID:
+
+```json
+{
+  "kv_namespaces": [
+    {
+      "binding": "CONTENT",
+      "id": "abc123def456..."  // Replace with your actual namespace ID
+    }
+  ]
+}
+```
+
+Then deploy:
+```bash
+npm run deploy
+```
+
+#### Method 2: Via Cloudflare Dashboard (For Git-based Deployments)
+
+1. Go to **Cloudflare Dashboard** → **Workers & Pages** → **Your Project**
 2. Navigate to **Settings** → **Functions** → **KV namespace bindings**
 3. Click **Add binding**:
    - **Variable name:** `CONTENT`
@@ -235,6 +311,9 @@ curl -X POST https://your-domain.pages.dev/api/new \
   -d '[{"product":"Test","price":9.99}]'
 
 # Should return: {"url":"/p/abc123...","id":"abc123...","size":25,"items":1}
+
+# Then visit the returned URL
+open https://your-domain.pages.dev/p/abc123...
 ```
 
 ---
