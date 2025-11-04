@@ -11,12 +11,6 @@
     "binding": "ASSETS",
     "directory": ".open-next/assets"
   },
-  "kv_namespaces": [
-    {
-      "binding": "CONTENT",
-      "id": "YOUR_KV_NAMESPACE_ID"
-    }
-  ],
   "observability": {
     "enabled": true
   },
