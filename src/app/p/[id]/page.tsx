@@ -5,6 +5,7 @@
  */
 
 import { notFound } from 'next/navigation';
+import styles from './page.module.css';
 
 export const runtime = 'edge';
 
@@ -40,41 +41,41 @@ function ProductCard({ product: p }: { product: Product }) {
   const isFree = p.is_free ? 'Yes' : 'No';
 
   return (
-    <div className="row">
+    <div className={styles.row}>
       {p.image_url && (
         <img
-          className="prod"
+          className={styles.prod}
           alt="Product image"
           src={p.image_url}
         />
       )}
-      <div className="meta">
-        <div className="title">{clean(p.product ?? 'Untitled')}</div>
-        <div className="grid">
-          <div><div className="k">Discount</div><div className="v">{discount}</div></div>
-          <div><div className="k">Free?</div><div className="v">{isFree}</div></div>
-          <div><div className="k">Price</div><div className="v">{price !== '' ? `$${price}` : ''}</div></div>
-          <div><div className="k">Compare At</div><div className="v">{compare !== '' ? `$${compare}` : ''}</div></div>
-          <div><div className="k">Variant ID</div><div className="v mono">{p.variantId ?? ''}</div></div>
+      <div className={styles.meta}>
+        <div className={styles.title}>{clean(p.product ?? 'Untitled')}</div>
+        <div className={styles.grid}>
+          <div><div className={styles.k}>Discount</div><div className={styles.v}>{discount}</div></div>
+          <div><div className={styles.k}>Free?</div><div className={styles.v}>{isFree}</div></div>
+          <div><div className={styles.k}>Price</div><div className={styles.v}>{price !== '' ? `$${price}` : ''}</div></div>
+          <div><div className={styles.k}>Compare At</div><div className={styles.v}>{compare !== '' ? `$${compare}` : ''}</div></div>
+          <div><div className={styles.k}>Variant ID</div><div className={`${styles.v} ${styles.mono}`}>{p.variantId ?? ''}</div></div>
           <div>
-            <div className="k">Website</div>
-            <div className="v">
+            <div className={styles.k}>Website</div>
+            <div className={styles.v}>
               {p.website && (
-                <a className="pill" href={p.website} target="_blank" rel="noopener noreferrer">
+                <a className={styles.pill} href={p.website} target="_blank" rel="noopener noreferrer">
                   Open site
                 </a>
               )}
             </div>
           </div>
         </div>
-        <div className="btns">
+        <div className={styles.btns}>
           {p.website && (
-            <a className="btn" href={p.website} target="_blank" rel="noopener noreferrer">
+            <a className={styles.btn} href={p.website} target="_blank" rel="noopener noreferrer">
               Visit Website
             </a>
           )}
           {p.cartLink && (
-            <a className="btn ok" href={p.cartLink} target="_blank" rel="noopener noreferrer">
+            <a className={`${styles.btn} ${styles.btnOk}`} href={p.cartLink} target="_blank" rel="noopener noreferrer">
               Add to Cart
             </a>
           )}
@@ -97,9 +98,17 @@ export default async function ProductPayloadPage({ params }: PageProps) {
 
   if (!env.CONTENT) {
     return (
-      <div className="error-container">
-        <h1>Configuration Error</h1>
-        <p>KV namespace not configured. Please add CONTENT binding in Cloudflare Pages settings.</p>
+      <div style={{
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        minHeight: '100vh',
+        padding: '20px',
+        color: '#1f2a4d'
+      }}>
+        <div className={styles.errorContainer}>
+          <h1>Configuration Error</h1>
+          <p>KV namespace not configured. Please add CONTENT binding in Cloudflare Pages settings.</p>
+        </div>
       </div>
     );
   }
@@ -121,190 +130,21 @@ export default async function ProductPayloadPage({ params }: PageProps) {
   const products: Product[] = Array.isArray(data) ? data : [data];
 
   return (
-    <>
-      <style jsx global>{`
-        * {
-          box-sizing: border-box;
-          margin: 0;
-          padding: 0;
-        }
-
-        body {
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          min-height: 100vh;
-          padding: 20px;
-          color: #1f2a4d;
-        }
-
-        .container {
-          max-width: 1000px;
-          margin: 0 auto;
-        }
-
-        .header {
-          text-align: center;
-          color: white;
-          margin-bottom: 30px;
-        }
-
-        .header h1 {
-          font-size: 2.5rem;
-          margin-bottom: 10px;
-          text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-        }
-
-        .header p {
-          font-size: 1.1rem;
-          opacity: 0.95;
-        }
-
-        .card {
-          background: white;
-          border-radius: 12px;
-          padding: 30px;
-          box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-          margin-bottom: 20px;
-        }
-
-        .muted {
-          color: #666;
-          font-size: 0.95rem;
-          margin-bottom: 20px;
-        }
-
-        .row {
-          margin-bottom: 18px;
-          border-bottom: 2px solid #e0e0e0;
-          padding-bottom: 18px;
-          display: flex;
-          gap: 20px;
-          flex-wrap: wrap;
-        }
-
-        .row:last-child {
-          border-bottom: none;
-        }
-
-        .prod {
-          width: 200px;
-          height: 200px;
-          object-fit: cover;
-          border-radius: 8px;
-          flex-shrink: 0;
-        }
-
-        .meta {
-          flex: 1;
-          min-width: 300px;
-        }
-
-        .title {
-          font-size: 1.5rem;
-          font-weight: 700;
-          color: #1f2a4d;
-          margin-bottom: 15px;
-        }
-
-        .grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-          gap: 12px;
-          margin-bottom: 15px;
-        }
-
-        .k {
-          font-size: 0.85rem;
-          color: #666;
-          font-weight: 600;
-          margin-bottom: 4px;
-        }
-
-        .v {
-          font-size: 1rem;
-          color: #1f2a4d;
-        }
-
-        .mono {
-          font-family: 'Courier New', monospace;
-          font-size: 0.9rem;
-        }
-
-        .pill {
-          display: inline-block;
-          padding: 4px 12px;
-          background: #f0f0f0;
-          border-radius: 20px;
-          font-size: 0.85rem;
-          color: #1f2a4d;
-          text-decoration: none;
-          transition: background 0.2s;
-        }
-
-        .pill:hover {
-          background: #e0e0e0;
-        }
-
-        .btns {
-          display: flex;
-          gap: 10px;
-          flex-wrap: wrap;
-        }
-
-        .btns .btn {
-          padding: 10px 20px;
-          font-size: 0.95rem;
-          background: #667eea;
-          color: white;
-          text-decoration: none;
-          border-radius: 8px;
-          transition: all 0.2s;
-          display: inline-block;
-        }
-
-        .btns .btn.ok {
-          background: #4caf50;
-        }
-
-        .btns .btn:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-
-        .error-container {
-          background: white;
-          padding: 40px;
-          border-radius: 12px;
-          text-align: center;
-          max-width: 600px;
-          margin: 100px auto;
-        }
-
-        @media (max-width: 768px) {
-          .header h1 {
-            font-size: 2rem;
-          }
-
-          .row {
-            flex-direction: column;
-          }
-
-          .prod {
-            width: 100%;
-            height: auto;
-            max-height: 300px;
-          }
-        }
-      `}</style>
-
-      <div className="container">
-        <div className="header">
+    <div style={{
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      minHeight: '100vh',
+      padding: '20px',
+      color: '#1f2a4d'
+    }}>
+      <div className={styles.container}>
+        <div className={styles.header}>
           <h1>Product Payload</h1>
           <p>Loaded from KV storage</p>
         </div>
 
-        <div className="card">
-          <div className="muted">
+        <div className={styles.card}>
+          <div className={styles.muted}>
             ✓ {products.length} item{products.length === 1 ? '' : 's'} loaded (ID: {id.substring(0, 8)}...)
           </div>
           {products.map((product, idx) => (
@@ -312,7 +152,7 @@ export default async function ProductPayloadPage({ params }: PageProps) {
           ))}
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
