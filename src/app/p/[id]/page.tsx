@@ -29,8 +29,8 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-function clean(s: any): any {
-  if (typeof s !== 'string') return s;
+function clean(s: unknown): string {
+  if (typeof s !== 'string') return String(s ?? '');
   return s.replace(/^\u200d|\ufeff|\u200b/g, '');
 }
 
@@ -43,6 +43,7 @@ function ProductCard({ product: p }: { product: Product }) {
   return (
     <div className={styles.row}>
       {p.image_url && (
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           className={styles.prod}
           alt="Product image"
@@ -114,7 +115,7 @@ export default async function ProductPayloadPage({ params }: PageProps) {
   }
 
   // Fetch from KV
-  let data: any;
+  let data: unknown;
   try {
     const jsonString = await env.CONTENT.get(id);
     if (!jsonString) {
@@ -127,7 +128,7 @@ export default async function ProductPayloadPage({ params }: PageProps) {
   }
 
   // Ensure it's an array
-  const products: Product[] = Array.isArray(data) ? data : [data];
+  const products: Product[] = Array.isArray(data) ? data : (data ? [data as Product] : []);
 
   return (
     <div style={{
