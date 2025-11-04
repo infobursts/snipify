@@ -1,0 +1,35 @@
+[
+  {
+    "product": "Mini Peptide + Ceramide Repairing Moisturizer (100% off)",
+    "variantId": "49240310415606",
+    "website": "https://drzenovia.com",
+    "cartLink": "https://drzenovia.com/cart/49240310415606:1",
+    "price": 0.0,
+    "compare_at_price": 48.0,
+    "discount_percentage": 100.0,
+    "is_free": true,
+    "image_url": "https://cdn.shopify.com/s/files/1/0334/6336/9868/files/PH_DZ_18004_ANGLE_R0722_83ba9d52-6cac-44f8-bd99-dd2d738d24c7.jpg?v=1761675716"
+  },
+  {
+    "product": "Advanced Acne Treatment Serum (50% off)",
+    "variantId": "49240310448374",
+    "website": "https://drzenovia.com",
+    "cartLink": "https://drzenovia.com/cart/49240310448374:1",
+    "price": 24.99,
+    "compare_at_price": 49.99,
+    "discount_percentage": 50.0,
+    "is_free": false,
+    "image_url": "https://cdn.shopify.com/s/files/1/0334/6336/9868/files/acne-serum.jpg?v=1761675716"
+  },
+  {
+    "product": "Vitamin C Brightening Cream (25% off)",
+    "variantId": "49240310481142",
+    "website": "https://drzenovia.com",
+    "cartLink": "https://drzenovia.com/cart/49240310481142:1",
+    "price": 29.99,
+    "compare_at_price": 39.99,
+    "discount_percentage": 25.0,
+    "is_free": false,
+    "image_url": "https://cdn.shopify.com/s/files/1/0334/6336/9868/files/vitamin-c-cream.jpg?v=1761675716"
+  }
+]

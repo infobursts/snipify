@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>URL Payload Renderer</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #1f2a4d;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 30px;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .header p {
+      font-size: 1.1rem;
+      opacity: 0.95;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      margin-bottom: 20px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    /* Encoder UI */
+    #encoder textarea {
+      width: 100%;
+      min-height: 200px;
+      padding: 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      resize: vertical;
+      margin-bottom: 15px;
+    }
+
+    #encoder textarea:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 5px;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1f2a4d;
+    }
+
+    .stat-value.warning {
+      color: #ff9800;
+    }
+
+    .stat-value.error {
+      color: #f44336;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button, .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #5568d3;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: #e0e0e0;
+      color: #1f2a4d;
+    }
+
+    .btn-secondary:hover {
+      background: #d0d0d0;
+    }
+
+    #generatedUrl {
+      margin-top: 15px;
+      padding: 15px;
+      background: #e8f5e9;
+      border-radius: 8px;
+      word-break: break-all;
+    }
+
+    #generatedUrl a {
+      color: #2e7d32;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    #generatedUrl a:hover {
+      text-decoration: underline;
+    }
+
+    /* Product Renderer */
+    .row {
+      margin-bottom: 18px;
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 18px;
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .row:last-child {
+      border-bottom: none;
+    }
+
+    .prod {
+      width: 200px;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 8px;
+      flex-shrink: 0;
+    }
+
+    .meta {
+      flex: 1;
+      min-width: 300px;
+    }
+
+    .title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1f2a4d;
+      margin-bottom: 15px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 15px;
+    }
+
+    .k {
+      font-size: 0.85rem;
+      color: #666;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .v {
+      font-size: 1rem;
+      color: #1f2a4d;
+    }
+
+    .mono {
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 4px 12px;
+      background: #f0f0f0;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      color: #1f2a4d;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+
+    .pill:hover {
+      background: #e0e0e0;
+    }
+
+    .btns {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btns .btn {
+      padding: 10px 20px;
+      font-size: 0.95rem;
+      background: #667eea;
+      color: white;
+    }
+
+    .btns .btn.ok {
+      background: #4caf50;
+    }
+
+    .btns .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .muted {
+      color: #666;
+      font-size: 0.95rem;
+    }
+
+    .error-message {
+      padding: 15px;
+      background: #ffebee;
+      border-left: 4px solid #f44336;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      color: #c62828;
+    }
+
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 2rem;
+      }
+
+      .row {
+        flex-direction: column;
+      }
+
+      .prod {
+        width: 100%;
+        height: auto;
+        max-height: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>URL Payload Renderer</h1>
+      <p>Compress JSON into URLs and render product cards</p>
+    </div>
+
+    <!-- Encoder UI -->
+    <div id="encoder" class="card hidden">
+      <h2 style="margin-bottom: 20px;">Generate Shareable Link</h2>
+      <textarea id="jsonInput" placeholder='Paste your JSON here, e.g.:
+[
+  {
+    "product": "Sample Product",
+    "variantId": "12345",
+    "website": "https://example.com",
+    "cartLink": "https://example.com/cart/12345:1",
+    "price": 29.99,
+    "compare_at_price": 39.99,
+    "discount_percentage": 25,
+    "is_free": false,
+    "image_url": "https://via.placeholder.com/200"
+  }
+]'></textarea>
+
+      <div id="stats" class="stats hidden">
+        <div class="stat">
+          <div class="stat-label">Original Size</div>
+          <div id="rawSize" class="stat-value">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Compressed</div>
+          <div id="compressedSize" class="stat-value">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Encoded Size</div>
+          <div id="encodedSize" class="stat-value">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Compression</div>
+          <div id="compressionRatio" class="stat-value">0%</div>
+        </div>
+      </div>
+
+      <div class="btn-group">
+        <button id="generateQuery" class="btn-primary">Generate Link (?d=)</button>
+        <button id="generateHash" class="btn-secondary">Generate Link (#)</button>
+        <button id="clearBtn" class="btn-secondary">Clear</button>
+      </div>
+
+      <div id="generatedUrl" class="hidden"></div>
+    </div>
+
+    <!-- Product Viewer -->
+    <div id="view" class="card hidden"></div>
+  </div>
+
+  <!-- Import fflate from CDN -->
+  <script type="module">
+    import { deflateSync, inflateSync } from 'https://cdn.jsdelivr.net/npm/fflate@0.8.2/+esm';
+
+    // Base64URL helpers (no padding)
+    function base64UrlEncode(bytes) {
+      const base64 = btoa(String.fromCharCode(...bytes));
+      return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    }
+
+    function base64UrlDecode(str) {
+      let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+      while (base64.length % 4) base64 += '=';
+      const binary = atob(base64);
+      return new Uint8Array([...binary].map(c => c.charCodeAt(0)));
+    }
+
+    // Clean zero-width characters
+    function clean(s) {
+      return typeof s === 'string' ? s.replace(/^\u200d|\ufeff|\u200b/g, '') : s;
+    }
+
+    // Encode JSON to compressed token
+    function encodePayload(data) {
+      const json = JSON.stringify(data);
+      const bytes = new TextEncoder().encode(json);
+      const compressed = deflateSync(bytes, { level: 9 });
+      return base64UrlEncode(compressed);
+    }
+
+    // Decode token to JSON
+    function decodePayload(token) {
+      const compressed = base64UrlDecode(token);
+      const decompressed = inflateSync(compressed);
+      const json = new TextDecoder().decode(decompressed);
+      return JSON.parse(json);
+    }
+
+    // Render products
+    function renderProducts(data) {
+      const items = Array.isArray(data) ? data : [data];
+
+      const card = (p) => {
+        const price = typeof p.price === 'number' ? p.price.toFixed(2) : (p.price ?? '');
+        const compare = typeof p.compare_at_price === 'number' ? p.compare_at_price.toFixed(2) : (p.compare_at_price ?? '');
+        const discount = (p.discount_percentage ?? 0) + '%';
+        const isFree = p.is_free ? 'Yes' : 'No';
+
+        return `
+          <div class="row">
+            <img class="prod" alt="Product image" src="${p.image_url || ''}" onerror="this.style.display='none'"/>
+            <div class="meta">
+              <div class="title">${clean(p.product ?? 'Untitled')}</div>
+              <div class="grid">
+                <div><div class="k">Discount</div><div class="v">${discount}</div></div>
+                <div><div class="k">Free?</div><div class="v">${isFree}</div></div>
+                <div><div class="k">Price</div><div class="v">${price !== '' ? `$${price}` : ''}</div></div>
+                <div><div class="k">Compare At</div><div class="v">${compare !== '' ? `$${compare}` : ''}</div></div>
+                <div><div class="k">Variant ID</div><div class="v mono">${p.variantId ?? ''}</div></div>
+                <div><div class="k">Website</div><div class="v"><a class="pill" href="${p.website}" target="_blank" rel="noopener">Open site</a></div></div>
+              </div>
+              <div class="btns">
+                <a class="btn" href="${p.website}" target="_blank" rel="noopener">Visit Website</a>
+                <a class="btn ok" href="${p.cartLink}" target="_blank" rel="noopener">Add to Cart</a>
+              </div>
+            </div>
+          </div>`;
+      };
+
+      const header = `<div class="muted" style="margin-bottom: 20px; font-size: 1.1rem;">✓ ${items.length} item${items.length === 1 ? '' : 's'} decoded from URL</div>`;
+      document.getElementById('view').innerHTML = header + items.map(card).join('');
+      document.getElementById('view').classList.remove('hidden');
+    }
+
+    // Show error
+    function showError(message) {
+      const errorHtml = `<div class="error-message"><strong>Error:</strong> ${message}</div>`;
+      document.getElementById('view').innerHTML = errorHtml;
+      document.getElementById('view').classList.remove('hidden');
+    }
+
+    // Initialize on page load
+    function init() {
+      const params = new URLSearchParams(window.location.search);
+      const queryToken = params.get('d');
+      const hashToken = window.location.hash.slice(1);
+
+      // Try to decode from URL
+      if (queryToken || hashToken) {
+        try {
+          const token = queryToken || hashToken;
+          const data = decodePayload(token);
+          renderProducts(data);
+        } catch (err) {
+          showError(`Failed to decode payload: ${err.message}`);
+          console.error(err);
+        }
+      } else {
+        // Show encoder UI
+        document.getElementById('encoder').classList.remove('hidden');
+      }
+    }
+
+    // Encoder functionality
+    const jsonInput = document.getElementById('jsonInput');
+    const generateQueryBtn = document.getElementById('generateQuery');
+    const generateHashBtn = document.getElementById('generateHash');
+    const clearBtn = document.getElementById('clearBtn');
+    const stats = document.getElementById('stats');
+    const generatedUrl = document.getElementById('generatedUrl');
+
+    function updateStats(json, token) {
+      const rawSize = new TextEncoder().encode(json).length;
+      const compressed = base64UrlDecode(token);
+      const encodedSize = token.length;
+
+      document.getElementById('rawSize').textContent = `${rawSize} B`;
+      document.getElementById('compressedSize').textContent = `${compressed.length} B`;
+      document.getElementById('encodedSize').textContent = `${encodedSize} B`;
+
+      const ratio = ((1 - compressed.length / rawSize) * 100).toFixed(1);
+      const ratioEl = document.getElementById('compressionRatio');
+      ratioEl.textContent = `${ratio}%`;
+
+      // Color code based on final size
+      const sizeEl = document.getElementById('encodedSize');
+      sizeEl.classList.remove('warning', 'error');
+      if (encodedSize > 16000) {
+        sizeEl.classList.add('error');
+      } else if (encodedSize > 14000) {
+        sizeEl.classList.add('warning');
+      }
+
+      stats.classList.remove('hidden');
+    }
+
+    function generateLink(useHash = false) {
+      try {
+        const json = jsonInput.value.trim();
+        if (!json) {
+          alert('Please enter JSON data');
+          return;
+        }
+
+        const data = JSON.parse(json);
+        const token = encodePayload(data);
+
+        updateStats(json, token);
+
+        const baseUrl = window.location.origin + window.location.pathname;
+        const url = useHash ? `${baseUrl}#${token}` : `${baseUrl}?d=${token}`;
+
+        generatedUrl.innerHTML = `
+          <div style="margin-bottom: 10px;"><strong>Your shareable link:</strong></div>
+          <div style="margin-bottom: 10px;"><a href="${url}" target="_blank">${url}</a></div>
+          <button onclick="navigator.clipboard.writeText('${url}').then(() => alert('Copied to clipboard!'))" class="btn-primary" style="font-size: 0.9rem; padding: 8px 16px;">Copy to Clipboard</button>
+        `;
+        generatedUrl.classList.remove('hidden');
+      } catch (err) {
+        alert(`Error: ${err.message}`);
+      }
+    }
+
+    generateQueryBtn.addEventListener('click', () => generateLink(false));
+    generateHashBtn.addEventListener('click', () => generateLink(true));
+    clearBtn.addEventListener('click', () => {
+      jsonInput.value = '';
+      stats.classList.add('hidden');
+      generatedUrl.classList.add('hidden');
+    });
+
+    // Auto-update stats on input
+    let timeout;
+    jsonInput.addEventListener('input', () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        try {
+          const json = jsonInput.value.trim();
+          if (json) {
+            const data = JSON.parse(json);
+            const token = encodePayload(data);
+            updateStats(json, token);
+          } else {
+            stats.classList.add('hidden');
+          }
+        } catch (err) {
+          // Ignore parse errors during typing
+        }
+      }, 500);
+    });
+
+    // Initialize
+    init();
+  </script>
+</body>
+</html>
